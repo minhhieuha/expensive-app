@@ -7,7 +7,7 @@ Chỉ agent chính (điều phối) và planner sửa file này. Chi tiết sche
 | ID | Task | Tiêu chí hoàn thành | Phụ thuộc | Trạng thái |
 |----|------|---------------------|-----------|-----------|
 | T01 | Khung dự án + CI | `api/` và `web/` build được; `go test`, `npm test`, lint chạy xanh; có `.env.example`; CI chạy 3 lệnh chuẩn; `GET /api/health` trả 200 | | done |
-| T02 | DB + migration | Mở DB với pragma đúng (mục 4); runner migration; `0001_init.sql` đúng ARCHITECTURE.md; test: migration chạy được trên DB rỗng, khóa ngoại ghép từ chối giao dịch trỏ danh mục của user khác | T01 | todo |
+| T02 | DB + migration | Mở DB với pragma đúng (mục 4); runner migration; `0001_init.sql` đúng ARCHITECTURE.md; test: migration chạy được trên DB rỗng, khóa ngoại ghép từ chối giao dịch trỏ danh mục của user khác | T01 | review |
 | T03 | Auth backend | `register`, `login`, `logout`, `GET /me` theo mục 6; bcrypt; mật khẩu 8-72 byte; phiên trong bảng `sessions`; rate limit; seed danh mục mặc định khi đăng ký; test: hợp lệ, email trùng (409), sai mật khẩu (cùng thông báo với email không tồn tại), chưa đăng nhập (401), phiên hết hạn, sau logout token cũ không dùng được | T02 | todo |
 | T04 | Middleware nền + cô lập dữ liệu | Auth middleware, CSRF header, security headers, lỗi chuẩn, helper `httpx.UserID`; bộ test mẫu "user A vs user B" dùng lại được cho các task sau | T03 | todo |
 | T05 | API danh mục | CRUD `/api/categories`; xóa kèm `replace_with` trong một transaction; test cô lập user, chặn `replace_with` khác kind | T04 | todo |
@@ -24,3 +24,4 @@ Gợi ý chạy song song (độc lập nhau): sau T04, làm T05 và T07 cùng l
 ## Nhật ký
 
 - 2026-11-09: T01 hoàn thành các vòng Developer -> Tester -> Reviewer trên branch `task/T01-khung-du-an`. Bộ 3 lệnh chuẩn (Go build/vet/test, Angular lint/test/build, Playwright e2e) đều đạt kết quả xanh. Chờ người dùng duyệt diff và merge vào `main`.
+- 2026-11-09: T02 hoàn thành các vòng Developer -> Tester -> Reviewer trên branch `task/T02-db-migration`. Schema 0001_init.sql, migration runner, pragma SQLite và khóa ngoại ghép cô lập user đã test pass 100%. Chờ người dùng duyệt diff và merge vào `main`.
