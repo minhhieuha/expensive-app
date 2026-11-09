@@ -6,7 +6,7 @@ Chỉ agent chính (điều phối) và planner sửa file này. Chi tiết sche
 
 | ID | Task | Tiêu chí hoàn thành | Phụ thuộc | Trạng thái |
 |----|------|---------------------|-----------|-----------|
-| T01 | Khung dự án + CI | `api/` và `web/` build được; `go test`, `npm test`, lint chạy xanh; có `.env.example`; CI chạy 3 lệnh chuẩn; `GET /api/health` trả 200 | | todo |
+| T01 | Khung dự án + CI | `api/` và `web/` build được; `go test`, `npm test`, lint chạy xanh; có `.env.example`; CI chạy 3 lệnh chuẩn; `GET /api/health` trả 200 | | doing |
 | T02 | DB + migration | Mở DB với pragma đúng (mục 4); runner migration; `0001_init.sql` đúng ARCHITECTURE.md; test: migration chạy được trên DB rỗng, khóa ngoại ghép từ chối giao dịch trỏ danh mục của user khác | T01 | todo |
 | T03 | Auth backend | `register`, `login`, `logout`, `GET /me` theo mục 6; bcrypt; mật khẩu 8-72 byte; phiên trong bảng `sessions`; rate limit; seed danh mục mặc định khi đăng ký; test: hợp lệ, email trùng (409), sai mật khẩu (cùng thông báo với email không tồn tại), chưa đăng nhập (401), phiên hết hạn, sau logout token cũ không dùng được | T02 | todo |
 | T04 | Middleware nền + cô lập dữ liệu | Auth middleware, CSRF header, security headers, lỗi chuẩn, helper `httpx.UserID`; bộ test mẫu "user A vs user B" dùng lại được cho các task sau | T03 | todo |
