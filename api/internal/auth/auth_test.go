@@ -273,3 +273,98 @@ func TestExpiredSession(t *testing.T) {
 		t.Fatalf("expected 401 for expired session, got %d", meRec.Code)
 	}
 }
+func TestPasswordExactBoundaries(t *testing.T) {
+	mux, _ := setupTestServer(t)
+
+	// 7 bytes -> fail
+	b7 := `{"email":"b7@example.com","password":"1234567"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBufferString(b7))
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("expected 422 for 7 byte password, got %d", rec.Code)
+	}
+
+	// 8 bytes -> pass
+	b8 := `{"email":"b8@example.com","password":"12345678"}`
+	req = httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBufferString(b8))
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Errorf("expected 201 for 8 byte password, got %d", rec.Code)
+	}
+
+	// 72 bytes -> pass
+	pw72 := strings.Repeat("a", 72)
+	b72, _ := json.Marshal(map[string]string{"email": "b72@example.com", "password": pw72})
+	req = httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(b72))
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Errorf("expected 201 for 72 byte password, got %d", rec.Code)
+	}
+
+	// 73 bytes -> fail
+	pw73 := strings.Repeat("a", 73)
+	b73, _ := json.Marshal(map[string]string{"email": "b73@example.com", "password": pw73})
+	req = httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(b73))
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("expected 422 for 73 byte password, got %d", rec.Code)
+	}
+}
+
+func TestDistinctSessionTokensPerLogin(t *testing.T) {
+	mux, _ := setupTestServer(t)
+
+	regBody := `{"email":"multisession@example.com","password":"password123"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBufferString(regBody))
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("register failed: %d", rec.Code)
+	}
+
+	token1 := getCookieValue(rec, "session")
+
+	// Login again
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(regBody))
+	loginRec := httptest.NewRecorder()
+	mux.ServeHTTP(loginRec, loginReq)
+	if loginRec.Code != http.StatusOK {
+		t.Fatalf("login failed: %d", loginRec.Code)
+	}
+
+	token2 := getCookieValue(loginRec, "session")
+
+	if token1 == token2 {
+		t.Error("expected different session tokens for consecutive logins")
+	}
+
+	// Both tokens should be valid for GET /api/me
+	meReq1 := httptest.NewRequest(http.MethodGet, "/api/me", nil)
+	meReq1.AddCookie(&http.Cookie{Name: "session", Value: token1})
+	meRec1 := httptest.NewRecorder()
+	mux.ServeHTTP(meRec1, meReq1)
+	if meRec1.Code != http.StatusOK {
+		t.Errorf("expected token1 to be valid, got %d", meRec1.Code)
+	}
+
+	meReq2 := httptest.NewRequest(http.MethodGet, "/api/me", nil)
+	meReq2.AddCookie(&http.Cookie{Name: "session", Value: token2})
+	meRec2 := httptest.NewRecorder()
+	mux.ServeHTTP(meRec2, meReq2)
+	if meRec2.Code != http.StatusOK {
+		t.Errorf("expected token2 to be valid, got %d", meRec2.Code)
+	}
+}
+
+func getCookieValue(rec *httptest.ResponseRecorder, name string) string {
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == name {
+			return c.Value
+		}
+	}
+	return ""
+}
