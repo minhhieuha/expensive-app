@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"expense-app/api/internal/auth"
 	"expense-app/api/internal/config"
 	"expense-app/api/internal/db"
 	"expense-app/api/internal/httpx"
@@ -24,6 +25,11 @@ func main() {
 	log.Println("Database opened and migrations applied successfully")
 
 	mux := httpx.SetupRoutes()
+
+	authRepo := auth.NewRepo(database)
+	authService := auth.NewService(authRepo, cfg.SessionTTLHours)
+	authHandler := auth.NewHandler(authService, cfg.CookieSecure)
+	authHandler.RegisterRoutes(mux)
 
 	addr := ":" + cfg.Port
 	log.Printf("Server listening on %s", addr)
