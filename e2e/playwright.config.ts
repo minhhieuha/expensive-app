@@ -1,4 +1,4 @@
-﻿import { defineConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 const PORT = process.env['PORT'] || '8088';
 
