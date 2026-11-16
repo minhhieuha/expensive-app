@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Auth API E2E', () => {
   const testUser = {
@@ -40,5 +40,23 @@ test.describe('Auth API E2E', () => {
     expect(resp.status()).toBe(401);
     const body = await resp.json();
     expect(body.error.code).toBe('invalid_credentials');
+  });
+
+  test('CSRF protection blocks write request without X-Requested-With header', async ({ playwright }) => {
+    const ctx = await playwright.request.newContext({
+      extraHTTPHeaders: {
+        'X-Requested-With': '',
+      },
+    });
+    const resp = await ctx.post(`http://127.0.0.1:${process.env['PORT'] || '8088'}/api/auth/login`, {
+      data: {
+        email: 'nobody@example.com',
+        password: 'password123',
+      },
+    });
+    expect(resp.status()).toBe(403);
+    const body = await resp.json();
+    expect(body.error.code).toBe('forbidden');
+    await ctx.dispose();
   });
 });
