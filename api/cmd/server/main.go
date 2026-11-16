@@ -31,9 +31,16 @@ func main() {
 	authHandler := auth.NewHandler(authService, cfg.CookieSecure)
 	authHandler.RegisterRoutes(mux)
 
+	handler := httpx.Chain(
+		mux,
+		httpx.Recovery,
+		httpx.SecurityHeaders,
+		httpx.RequireCSRF,
+	)
+
 	addr := ":" + cfg.Port
 	log.Printf("Server listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil && err != http.ErrServerClosed {
+	if err := http.ListenAndServe(addr, handler); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

@@ -7,6 +7,9 @@ export default defineConfig({
   timeout: 30000,
   use: {
     baseURL: process.env['BASE_URL'] || `http://127.0.0.1:${PORT}`,
+    extraHTTPHeaders: {
+      'X-Requested-With': 'expense-app',
+    },
   },
   webServer: {
     command: 'go run ./cmd/server',
