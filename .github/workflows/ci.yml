@@ -53,12 +53,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: server/go.mod # adjust to where your go.mod lives
-          cache-dependency-path: server/go.sum
-      - name: Build server
-        run: |
-          cd server                        # adjust path
-          go build -o ../bin/server .      # adjust to your main package
+          go-version: "1.26"
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -69,7 +64,6 @@ jobs:
         run: |
           cd e2e
           npm ci
-          npx playwright install --with-deps chromium
       - name: Run Playwright tests
         run: |
           cd e2e
