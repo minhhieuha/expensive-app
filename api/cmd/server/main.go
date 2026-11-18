@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"expense-app/api/internal/auth"
+	"expense-app/api/internal/category"
 	"expense-app/api/internal/config"
 	"expense-app/api/internal/db"
 	"expense-app/api/internal/httpx"
@@ -30,6 +32,20 @@ func main() {
 	authService := auth.NewService(authRepo, cfg.SessionTTLHours)
 	authHandler := auth.NewHandler(authService, cfg.CookieSecure)
 	authHandler.RegisterRoutes(mux)
+
+	authValidator := func(ctx context.Context, token string) (int64, error) {
+		user, err := authService.GetCurrentUser(ctx, token)
+		if err != nil {
+			return 0, err
+		}
+		return user.ID, nil
+	}
+	requireAuthMid := httpx.RequireAuth(authValidator)
+
+	categoryRepo := category.NewRepo(database)
+	categoryService := category.NewService(categoryRepo)
+	categoryHandler := category.NewHandler(categoryService, requireAuthMid)
+	categoryHandler.RegisterRoutes(mux)
 
 	handler := httpx.Chain(
 		mux,
