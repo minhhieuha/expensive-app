@@ -10,9 +10,9 @@ Chỉ agent chính (điều phối) và planner sửa file này. Chi tiết sche
 | T02 | DB + migration | Mở DB với pragma đúng (mục 4); runner migration; `0001_init.sql` đúng ARCHITECTURE.md; test: migration chạy được trên DB rỗng, khóa ngoại ghép từ chối giao dịch trỏ danh mục của user khác | T01 | done |
 | T03 | Auth backend | `register`, `login`, `logout`, `GET /me` theo mục 6; bcrypt; mật khẩu 8-72 byte; phiên trong bảng `sessions`; rate limit; seed danh mục mặc định khi đăng ký; test: hợp lệ, email trùng (409), sai mật khẩu (cùng thông báo với email không tồn tại), chưa đăng nhập (401), phiên hết hạn, sau logout token cũ không dùng được | T02 | done |
 | T04 | Middleware nền + cô lập dữ liệu | Auth middleware, CSRF header, security headers, lỗi chuẩn, helper `httpx.UserID`; bộ test mẫu "user A vs user B" dùng lại được cho các task sau | T03 | done |
-| T05 | API danh mục | CRUD `/api/categories`; xóa kèm `replace_with` trong một transaction; test cô lập user, chặn `replace_with` khác kind | T04 | review |
-| T06 | API giao dịch | CRUD + lọc + tìm + phân trang; validate amount, ngày, category cùng user và cùng kind; test hợp lệ, 4 case lỗi, cô lập user, `q` chứa `%` | T05 | todo |
-| T07 | Frontend: khung + auth | Routing lazy, trang đăng ký/đăng nhập, guard, interceptor (X-Requested-With, 401 → login); test guard, interceptor, form | T04 | todo |
+| T05 | API danh mục | CRUD `/api/categories`; xóa kèm `replace_with` trong một transaction; test cô lập user, chặn `replace_with` khác kind | T04 | done |
+| T06 | API giao dịch | CRUD + lọc + tìm + phân trang; validate amount, ngày, category cùng user và cùng kind; test hợp lệ, 4 case lỗi, cô lập user, `q` chứa `%` | T05 | doing |
+| T07 | Frontend: khung + auth | Routing lazy, trang đăng ký/đăng nhập, guard, interceptor (X-Requested-With, 401 → login); test guard, interceptor, form | T04 | doing |
 | T08 | Frontend: giao dịch + danh mục | Danh sách, bộ lọc, form thêm/sửa/xóa, quản lý danh mục; `money.pipe` VND; đủ trạng thái tải/lỗi/rỗng | T06, T07 | todo |
 | T09 | Ngân sách (API + UI) | `GET/PUT/DELETE /api/budgets`; `status` tính bằng số nguyên (80% / vượt); UI đặt ngân sách, thanh tiến độ, cảnh báo | T06, T07 | todo |
 | T10 | Dashboard (API + UI) | `/reports/summary`, `/by-category`, `/trend`; gom theo tháng bằng `occurred_on`; biểu đồ; test biên ngày 28-31 và 01, tháng không có dữ liệu | T06, T07 | todo |
@@ -28,3 +28,4 @@ Gợi ý chạy song song (độc lập nhau): sau T04, làm T05 và T07 cùng l
 - 2026-11-09: T03 hoàn thành các vòng Developer -> Tester -> Reviewer trên branch `task/T03-auth-backend`. Đăng ký, đăng nhập (bcrypt + dummy hash chống timing attack + rate limit), đăng xuất, phiên trong bảng sessions, seed 11 danh mục mặc định và e2e Playwright đều pass xanh 100%. Chờ người dùng duyệt diff và merge vào `main`.
 - 2026-11-16: T04 hoàn thành và đã được merge vào `main`. Khởi động T05 (API danh mục) trên branch `task/T05-api-categories`.
 - 2026-11-18: T05 hoàn thành các vòng Developer -> Tester -> Reviewer trên branch `task/T05-api-categories`. CRUD /api/categories, lọc theo kind, xóa kèm replace_with trong một transaction DB, chặn replace khác loại, cô lập dữ liệu 100% giữa các user. Bộ 3 lệnh chuẩn (Go build/vet/test, Angular lint/test/build, Playwright e2e 6/6 tests) đều pass xanh. Chờ người dùng duyệt diff và merge vào `main`.
+- 2026-11-18: T05 đã được merge vào `main`. Bắt đầu triển khai song song T06 (API giao dịch) và T07 (Frontend khung + auth).
