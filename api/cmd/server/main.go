@@ -10,7 +10,20 @@ import (
 	"expense-app/api/internal/config"
 	"expense-app/api/internal/db"
 	"expense-app/api/internal/httpx"
+	"expense-app/api/internal/transaction"
 )
+
+type catValidatorAdapter struct {
+	repo *category.Repo
+}
+
+func (a *catValidatorAdapter) GetCategory(ctx context.Context, userID int64, categoryID int64) (*transaction.CategoryInfo, error) {
+	c, err := a.repo.GetByID(ctx, userID, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	return &transaction.CategoryInfo{ID: c.ID, Kind: c.Kind}, nil
+}
 
 func main() {
 	cfg := config.Load()
@@ -46,6 +59,11 @@ func main() {
 	categoryService := category.NewService(categoryRepo)
 	categoryHandler := category.NewHandler(categoryService, requireAuthMid)
 	categoryHandler.RegisterRoutes(mux)
+
+	txRepo := transaction.NewRepo(database)
+	txService := transaction.NewService(txRepo, &catValidatorAdapter{repo: categoryRepo})
+	txHandler := transaction.NewHandler(txService, requireAuthMid)
+	txHandler.RegisterRoutes(mux)
 
 	handler := httpx.Chain(
 		mux,
