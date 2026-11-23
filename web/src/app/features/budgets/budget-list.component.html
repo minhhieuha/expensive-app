@@ -1,0 +1,145 @@
+<div class="budget-page">
+  <div class="page-header">
+    <h2>Quản lý ngân sách</h2>
+    <div class="month-selector">
+      <label for="month-input" class="month-label">Chọn tháng:</label>
+      <input
+        id="month-input"
+        type="month"
+        [(ngModel)]="selectedMonth"
+        (change)="onMonthChange()"
+        class="input-control month-input"
+      />
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  @if (successMsg()) {
+    <div class="alert alert-success">{{ successMsg() }}</div>
+  }
+
+  <!-- Tóm tắt ngân sách tháng -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <span class="card-label">Tổng ngân sách</span>
+      <span class="card-value">{{ totalBudget | money }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="card-label">Tổng thực chi</span>
+      <span class="card-value text-expense">{{ totalSpent | money }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="card-label">Tỷ lệ sử dụng</span>
+      <span
+        class="card-value"
+        [class.text-success]="calcPercent(totalSpent, totalBudget) < 80"
+        [class.text-warning]="calcPercent(totalSpent, totalBudget) >= 80 && calcPercent(totalSpent, totalBudget) <= 100"
+        [class.text-danger]="calcPercent(totalSpent, totalBudget) > 100"
+      >
+        {{ calcPercent(totalSpent, totalBudget) }}%
+      </span>
+    </div>
+  </div>
+
+  <!-- Form đặt / sửa ngân sách -->
+  <div class="card form-card">
+    <h3>Đặt ngân sách cho tháng {{ selectedMonth }}</h3>
+    <form [formGroup]="budgetForm" (ngSubmit)="onFormSubmit()" class="budget-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cat-select" class="form-label">Danh mục chi phí <span class="required">*</span></label>
+          <select id="cat-select" formControlName="category_id" class="input-control">
+            @for (cat of expenseCategories(); track cat.id) {
+              <option [value]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="amount-input" class="form-label">Hạn mức ngân sách (VND) <span class="required">*</span></label>
+          <input
+            id="amount-input"
+            type="number"
+            formControlName="amount"
+            placeholder="Nhập số tiền..."
+            min="1"
+            max="1000000000000"
+            step="1"
+            class="input-control"
+          />
+        </div>
+
+        <div class="form-group form-actions">
+          <button
+            type="submit"
+            [disabled]="budgetForm.invalid || loading()"
+            class="btn btn-primary"
+          >
+            Lưu ngân sách
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Danh sách ngân sách theo danh mục -->
+  <div class="card budget-list-card">
+    <h3>Chi tiết ngân sách từng danh mục</h3>
+
+    @if (loading() && budgets().length === 0) {
+      <div class="state-loading">Đang tải danh sách ngân sách...</div>
+    } @else if (budgets().length === 0) {
+      <div class="state-empty">
+        Chưa có ngân sách nào được thiết lập cho tháng {{ selectedMonth }}. Hãy chọn danh mục và đặt hạn mức ở form trên!
+      </div>
+    } @else {
+      <div class="budget-items">
+        @for (b of budgets(); track b.id) {
+          <div class="budget-item">
+            <div class="budget-item-header">
+              <span class="cat-title">{{ b.category_name }}</span>
+              <div class="header-right">
+                <span
+                  class="status-badge"
+                  [class.badge-ok]="b.status === 'ok'"
+                  [class.badge-warning]="b.status === 'warning'"
+                  [class.badge-exceeded]="b.status === 'exceeded'"
+                >
+                  @if (b.status === 'ok') {
+                    ✓ An toàn
+                  } @else if (b.status === 'warning') {
+                    ⚠️ Cảnh báo (≥80%)
+                  } @else {
+                    🚨 Vượt ngân sách
+                  }
+                </span>
+                <button type="button" (click)="editBudget(b)" class="btn-icon" title="Sửa">✏️</button>
+                <button type="button" (click)="deleteBudget(b)" class="btn-icon btn-danger-icon" title="Xóa">🗑️</button>
+              </div>
+            </div>
+
+            <div class="budget-metrics">
+              <span>Đã chi: <strong>{{ b.spent | money }}</strong></span>
+              <span>Hạn mức: <strong>{{ b.amount | money }}</strong></span>
+              <span class="percent-label">{{ calcPercent(b.spent, b.amount) }}%</span>
+            </div>
+
+            <!-- Thanh tiến độ -->
+            <div class="progress-bar-bg">
+              <div
+                class="progress-bar-fill"
+                [class.fill-ok]="b.status === 'ok'"
+                [class.fill-warning]="b.status === 'warning'"
+                [class.fill-exceeded]="b.status === 'exceeded'"
+                [style.width.%]="calcProgressWidth(b.spent, b.amount)"
+              ></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

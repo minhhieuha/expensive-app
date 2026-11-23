@@ -54,6 +54,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'budgets',
+    loadComponent: () =>
+      import('./features/budgets/budget-list.component').then(
+        (m) => m.BudgetListComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: '**',
     redirectTo: '',
   },

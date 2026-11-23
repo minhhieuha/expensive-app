@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"expense-app/api/internal/auth"
+	"expense-app/api/internal/budget"
 	"expense-app/api/internal/category"
 	"expense-app/api/internal/config"
 	"expense-app/api/internal/db"
@@ -23,6 +24,18 @@ func (a *catValidatorAdapter) GetCategory(ctx context.Context, userID int64, cat
 		return nil, err
 	}
 	return &transaction.CategoryInfo{ID: c.ID, Kind: c.Kind}, nil
+}
+
+type budgetCatValidatorAdapter struct {
+	repo *category.Repo
+}
+
+func (a *budgetCatValidatorAdapter) GetCategory(ctx context.Context, userID int64, categoryID int64) (*budget.CategoryInfo, error) {
+	c, err := a.repo.GetByID(ctx, userID, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	return &budget.CategoryInfo{ID: c.ID, Kind: c.Kind}, nil
 }
 
 func main() {
@@ -64,6 +77,11 @@ func main() {
 	txService := transaction.NewService(txRepo, &catValidatorAdapter{repo: categoryRepo})
 	txHandler := transaction.NewHandler(txService, requireAuthMid)
 	txHandler.RegisterRoutes(mux)
+
+	budgetRepo := budget.NewRepo(database)
+	budgetService := budget.NewService(budgetRepo, &budgetCatValidatorAdapter{repo: categoryRepo})
+	budgetHandler := budget.NewHandler(budgetService, requireAuthMid)
+	budgetHandler.RegisterRoutes(mux)
 
 	handler := httpx.Chain(
 		mux,

@@ -13,6 +13,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="quick-links">
         <a routerLink="/transactions" class="btn btn-primary">📖 Xem sổ giao dịch</a>
         <a routerLink="/transactions/new" class="btn btn-success">+ Ghi chép mới</a>
+        <a routerLink="/budgets" class="btn btn-warning">🎯 Quản lý ngân sách</a>
         <a routerLink="/categories" class="btn btn-secondary">🏷️ Quản lý danh mục</a>
       </div>
     </div>
@@ -51,6 +52,13 @@ import { AuthService } from '../../core/auth/auth.service';
     }
     .btn-success:hover {
       background: #15803d;
+    }
+    .btn-warning {
+      background: #d97706;
+      color: #fff;
+    }
+    .btn-warning:hover {
+      background: #b45309;
     }
     .btn-secondary {
       background: #f1f5f9;
