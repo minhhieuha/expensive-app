@@ -1,0 +1,281 @@
+.transaction-page {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+
+  &-error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  &-success {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-card {
+  padding: 1.25rem;
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    align-items: flex-end;
+
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+
+      label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+      }
+    }
+
+    .filter-search {
+      grid-column: span 2;
+
+      @media (max-width: 640px) {
+        grid-column: span 1;
+      }
+
+      .search-input-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+    }
+  }
+}
+
+.input-control {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+}
+
+.btn {
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &-primary {
+    background: #2563eb;
+    color: #ffffff;
+
+    &:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+  }
+
+  &-secondary {
+    background: #e2e8f0;
+    color: #334155;
+
+    &:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+  }
+
+  &-outline {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+
+  &-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+
+  th {
+    background: #f8fafc;
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+  }
+
+  .tx-date {
+    white-space: nowrap;
+    color: #64748b;
+  }
+
+  .tx-cat {
+    font-weight: 500;
+  }
+
+  .tx-amount {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .tx-note {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #475569;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &-expense {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  &-income {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+}
+
+.text-expense {
+  color: #dc2626;
+}
+
+.text-income {
+  color: #16a34a;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.btn-danger-icon:hover {
+  background: #fef2f2;
+}
+
+.state-loading, .state-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #64748b;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  .pagination-info {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .current-page-pill {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e293b;
+      padding: 0 0.5rem;
+    }
+  }
+}

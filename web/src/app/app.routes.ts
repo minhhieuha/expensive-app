@@ -22,6 +22,38 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'transactions',
+    loadComponent: () =>
+      import('./features/transactions/transaction-list.component').then(
+        (m) => m.TransactionListComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'transactions/new',
+    loadComponent: () =>
+      import('./features/transactions/transaction-form.component').then(
+        (m) => m.TransactionFormComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'transactions/:id/edit',
+    loadComponent: () =>
+      import('./features/transactions/transaction-form.component').then(
+        (m) => m.TransactionFormComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'categories',
+    loadComponent: () =>
+      import('./features/categories/category-list.component').then(
+        (m) => m.CategoryListComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: '**',
     redirectTo: '',
   },

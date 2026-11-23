@@ -1,0 +1,172 @@
+<div class="transaction-page">
+  <div class="page-header">
+    <h2>Sổ giao dịch</h2>
+    <a routerLink="/transactions/new" class="btn btn-primary">+ Ghi chép mới</a>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  @if (successMsg()) {
+    <div class="alert alert-success">{{ successMsg() }}</div>
+  }
+
+  <!-- Thanh lọc và tìm kiếm -->
+  <div class="card filter-card">
+    <div class="filter-grid">
+      <div class="filter-item">
+        <label for="filter-from">Từ ngày</label>
+        <input
+          id="filter-from"
+          type="date"
+          [(ngModel)]="filterFrom"
+          (change)="applyFilter()"
+          class="input-control"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="filter-to">Đến ngày</label>
+        <input
+          id="filter-to"
+          type="date"
+          [(ngModel)]="filterTo"
+          (change)="applyFilter()"
+          class="input-control"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="filter-type">Loại</label>
+        <select
+          id="filter-type"
+          [(ngModel)]="filterType"
+          (change)="onTypeFilterChange()"
+          class="input-control"
+        >
+          <option value="">Tất cả loại</option>
+          <option value="expense">Chi phí</option>
+          <option value="income">Thu nhập</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label for="filter-cat">Danh mục</label>
+        <select
+          id="filter-cat"
+          [(ngModel)]="filterCategoryId"
+          (change)="applyFilter()"
+          class="input-control"
+        >
+          <option value="">Tất cả danh mục</option>
+          @for (cat of filteredCategories; track cat.id) {
+            <option [value]="cat.id">{{ cat.name }} ({{ cat.kind === 'expense' ? 'Chi' : 'Thu' }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-item filter-search">
+        <label for="filter-q">Tìm ghi chú</label>
+        <div class="search-input-group">
+          <input
+            id="filter-q"
+            type="text"
+            [(ngModel)]="filterQuery"
+            placeholder="Tìm kiếm trong ghi chú..."
+            (keyup.enter)="applyFilter()"
+            class="input-control"
+          />
+          <button type="button" (click)="applyFilter()" class="btn btn-secondary">Tìm</button>
+          <button type="button" (click)="resetFilter()" class="btn btn-outline">Đặt lại</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Danh sách giao dịch -->
+  <div class="card table-card">
+    @if (loading() && paginatedData().items.length === 0) {
+      <div class="state-loading">Đang tải danh sách giao dịch...</div>
+    } @else if (paginatedData().items.length === 0) {
+      <div class="state-empty">
+        <p>Không có giao dịch nào phù hợp với bộ lọc.</p>
+        <a routerLink="/transactions/new" class="btn btn-sm btn-primary">Thêm giao dịch ngay</a>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Loại</th>
+              <th>Danh mục</th>
+              <th>Số tiền</th>
+              <th>Ghi chú</th>
+              <th class="text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of paginatedData().items; track tx.id) {
+              <tr class="tx-row">
+                <td class="tx-date">{{ tx.occurred_on }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.badge-expense]="tx.type === 'expense'"
+                    [class.badge-income]="tx.type === 'income'"
+                  >
+                    {{ tx.type === 'expense' ? 'Chi' : 'Thu' }}
+                  </span>
+                </td>
+                <td class="tx-cat">{{ tx.category_name || 'Danh mục #' + tx.category_id }}</td>
+                <td
+                  class="tx-amount"
+                  [class.text-expense]="tx.type === 'expense'"
+                  [class.text-income]="tx.type === 'income'"
+                >
+                  {{ tx.type === 'expense' ? '-' : '+' }}{{ tx.amount | money }}
+                </td>
+                <td class="tx-note">{{ tx.note || '—' }}</td>
+                <td class="text-right tx-actions">
+                  <a [routerLink]="['/transactions', tx.id, 'edit']" class="btn-icon" title="Sửa">
+                    ✏️
+                  </a>
+                  <button type="button" (click)="deleteTransaction(tx)" class="btn-icon btn-danger-icon" title="Xóa">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Phân trang -->
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          Tổng cộng: <strong>{{ paginatedData().total }}</strong> giao dịch (Trang {{ currentPage }}/{{ totalPages }})
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            [disabled]="currentPage <= 1 || loading()"
+            (click)="goToPage(currentPage - 1)"
+            class="btn btn-sm btn-secondary"
+          >
+            ← Trước
+          </button>
+          <span class="current-page-pill">{{ currentPage }}</span>
+          <button
+            type="button"
+            [disabled]="currentPage >= totalPages || loading()"
+            (click)="goToPage(currentPage + 1)"
+            class="btn btn-sm btn-secondary"
+          >
+            Sau →
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

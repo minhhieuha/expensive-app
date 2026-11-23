@@ -1,0 +1,119 @@
+<div class="form-page">
+  <div class="card form-card">
+    <div class="form-header">
+      <h2>{{ isEditMode() ? 'Sửa giao dịch' : 'Ghi chép giao dịch mới' }}</h2>
+      <a routerLink="/transactions" class="btn btn-sm btn-outline">← Quay lại danh sách</a>
+    </div>
+
+    @if (errorMsg()) {
+      <div class="alert alert-error">{{ errorMsg() }}</div>
+    }
+
+    <form [formGroup]="txForm" (ngSubmit)="onSubmit()" class="tx-form">
+      <!-- Loại giao dịch (Chi tiêu / Thu nhập) -->
+      <div class="form-group">
+        <span class="form-label">Loại giao dịch <span class="required">*</span></span>
+        <div class="type-selector">
+          <button
+            type="button"
+            class="type-btn type-expense"
+            [class.active]="txForm.get('type')?.value === 'expense'"
+            (click)="onTypeChange('expense')"
+          >
+            📉 Chi phí
+          </button>
+          <button
+            type="button"
+            class="type-btn type-income"
+            [class.active]="txForm.get('type')?.value === 'income'"
+            (click)="onTypeChange('income')"
+          >
+            📈 Thu nhập
+          </button>
+        </div>
+      </div>
+
+      <!-- Danh mục -->
+      <div class="form-group">
+        <label for="category_id" class="form-label">Danh mục <span class="required">*</span></label>
+        <select id="category_id" formControlName="category_id" class="input-control">
+          <option [ngValue]="null" disabled>-- Chọn danh mục --</option>
+          @for (cat of filteredCategories; track cat.id) {
+            <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+        @if (txForm.get('category_id')?.touched && txForm.get('category_id')?.invalid) {
+          <div class="field-error">Vui lòng chọn danh mục</div>
+        }
+      </div>
+
+      <!-- Số tiền -->
+      <div class="form-group">
+        <label for="amount" class="form-label">Số tiền (VND) <span class="required">*</span></label>
+        <input
+          id="amount"
+          type="number"
+          formControlName="amount"
+          placeholder="Nhập số tiền..."
+          min="1"
+          max="1000000000000"
+          step="1"
+          class="input-control"
+        />
+        @if (txForm.get('amount')?.touched && txForm.get('amount')?.invalid) {
+          <div class="field-error">
+            @if (txForm.get('amount')?.errors?.['required']) {
+              Số tiền không được để trống
+            } @else if (txForm.get('amount')?.errors?.['min']) {
+              Số tiền phải lớn hơn 0
+            } @else if (txForm.get('amount')?.errors?.['max']) {
+              Số tiền vượt quá hạn mức tối đa (1000 tỷ)
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Ngày giao dịch -->
+      <div class="form-group">
+        <label for="occurred_on" class="form-label">Ngày giao dịch <span class="required">*</span></label>
+        <input
+          id="occurred_on"
+          type="date"
+          formControlName="occurred_on"
+          class="input-control"
+        />
+        @if (txForm.get('occurred_on')?.touched && txForm.get('occurred_on')?.invalid) {
+          <div class="field-error">Vui lòng chọn ngày hợp lệ (YYYY-MM-DD)</div>
+        }
+      </div>
+
+      <!-- Ghi chú -->
+      <div class="form-group">
+        <label for="note" class="form-label">Ghi chú</label>
+        <textarea
+          id="note"
+          formControlName="note"
+          rows="3"
+          maxlength="500"
+          placeholder="Thêm ghi chú chi tiết (tối đa 500 ký tự)..."
+          class="input-control textarea-control"
+        ></textarea>
+        <div class="char-count">
+          {{ txForm.get('note')?.value?.length || 0 }}/500 ký tự
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <div class="form-actions">
+        <a routerLink="/transactions" class="btn btn-secondary">Hủy</a>
+        <button
+          type="submit"
+          [disabled]="txForm.invalid || submitting() || loading()"
+          class="btn btn-primary"
+        >
+          {{ isEditMode() ? 'Lưu thay đổi' : 'Tạo giao dịch' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

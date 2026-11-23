@@ -1,0 +1,141 @@
+<div class="category-page">
+  <div class="page-header">
+    <h2>Quản lý danh mục</h2>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  @if (successMsg()) {
+    <div class="alert alert-success">{{ successMsg() }}</div>
+  }
+
+  <!-- Tabs Chi / Thu -->
+  <div class="tab-container">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'expense'"
+      (click)="setTab('expense')"
+    >
+      📉 Chi phí (Expense)
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'income'"
+      (click)="setTab('income')"
+    >
+      📈 Thu nhập (Income)
+    </button>
+  </div>
+
+  <!-- Form thêm mới danh mục -->
+  <div class="card add-category-card">
+    <h3>Thêm danh mục {{ activeTab() === 'expense' ? 'chi phí' : 'thu nhập' }}</h3>
+    <form [formGroup]="addForm" (ngSubmit)="onAddSubmit()" class="add-form">
+      <div class="form-group">
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Nhập tên danh mục (1-50 ký tự)..."
+          maxlength="50"
+          class="input-control"
+        />
+      </div>
+      <button type="submit" [disabled]="addForm.invalid || loading()" class="btn btn-primary">
+        + Thêm danh mục
+      </button>
+    </form>
+  </div>
+
+  <!-- Danh sách danh mục -->
+  <div class="card category-list-card">
+    @if (loading() && allCategories().length === 0) {
+      <div class="state-loading">Đang tải danh mục...</div>
+    } @else if (filteredCategories.length === 0) {
+      <div class="state-empty">Chưa có danh mục nào trong nhóm này.</div>
+    } @else {
+      <ul class="category-items">
+        @for (cat of filteredCategories; track cat.id) {
+          <li class="category-item">
+            @if (editingCategory()?.id === cat.id) {
+              <div class="edit-row">
+                <input
+                  type="text"
+                  [(ngModel)]="editName"
+                  maxlength="50"
+                  class="input-control edit-input"
+                />
+                <button type="button" (click)="saveEdit()" [disabled]="!editName.trim() || loading()" class="btn btn-sm btn-success">
+                  Lưu
+                </button>
+                <button type="button" (click)="cancelEdit()" class="btn btn-sm btn-secondary">
+                  Hủy
+                </button>
+              </div>
+            } @else {
+              <span class="cat-name">{{ cat.name }}</span>
+              <div class="cat-actions">
+                <button type="button" (click)="startEdit(cat)" class="btn-icon" title="Sửa">
+                  ✏️
+                </button>
+                <button type="button" (click)="onDeleteClick(cat)" class="btn-icon btn-danger-icon" title="Xóa">
+                  🗑️
+                </button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- Modal thay thế danh mục khi xóa -->
+  @if (deletingCategory(); as cat) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Xóa danh mục: "{{ cat.name }}"</h3>
+        <p class="modal-desc">
+          Danh mục này đang có giao dịch phát sinh. Để xóa, bạn phải chuyển tất cả giao dịch sang một danh mục khác cùng loại.
+        </p>
+
+        @if (otherCategoriesOfSameKind(cat).length === 0) {
+          <div class="alert alert-error">
+            Không còn danh mục {{ cat.kind === 'expense' ? 'chi phí' : 'thu nhập' }} nào khác để chuyển. Vui lòng tạo danh mục mới trước khi xóa danh mục này!
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="cancelReplace()" class="btn btn-secondary">Đóng</button>
+          </div>
+        } @else {
+          <div class="form-group">
+            <label for="replace-select">Chuyển toàn bộ giao dịch sang:</label>
+            <select
+              id="replace-select"
+              [ngModel]="selectedReplaceId()"
+              (ngModelChange)="selectedReplaceId.set($event)"
+              class="input-control"
+            >
+              @for (other of otherCategoriesOfSameKind(cat); track other.id) {
+                <option [value]="other.id">{{ other.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="cancelReplace()" class="btn btn-secondary">Hủy</button>
+            <button
+              type="button"
+              (click)="confirmReplaceAndDelete()"
+              [disabled]="!selectedReplaceId() || loading()"
+              class="btn btn-danger"
+            >
+              Xác nhận chuyển & xóa
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
