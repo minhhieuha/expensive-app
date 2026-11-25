@@ -11,6 +11,7 @@ import (
 	"expense-app/api/internal/config"
 	"expense-app/api/internal/db"
 	"expense-app/api/internal/httpx"
+	"expense-app/api/internal/report"
 	"expense-app/api/internal/transaction"
 )
 
@@ -82,6 +83,11 @@ func main() {
 	budgetService := budget.NewService(budgetRepo, &budgetCatValidatorAdapter{repo: categoryRepo})
 	budgetHandler := budget.NewHandler(budgetService, requireAuthMid)
 	budgetHandler.RegisterRoutes(mux)
+
+	reportRepo := report.NewRepo(database)
+	reportService := report.NewService(reportRepo)
+	reportHandler := report.NewHandler(reportService, requireAuthMid)
+	reportHandler.RegisterRoutes(mux)
 
 	handler := httpx.Chain(
 		mux,

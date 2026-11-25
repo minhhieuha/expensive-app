@@ -1,0 +1,117 @@
+<div class="dashboard-page">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Bảng điều khiển & Báo cáo</h2>
+      <p class="user-greeting">Xin chào, <strong>{{ authService.currentUser()?.email }}</strong>!</p>
+    </div>
+    <div class="month-selector">
+      <label for="dash-month" class="month-label">Chọn tháng:</label>
+      <input
+        id="dash-month"
+        type="month"
+        [(ngModel)]="selectedMonth"
+        (change)="onMonthChange()"
+        class="input-control month-input"
+      />
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  <!-- 3 Thẻ tóm tắt Thu / Chi / Số dư -->
+  <div class="summary-cards">
+    <div class="summary-card income-card">
+      <div class="card-icon">📈</div>
+      <div class="card-content">
+        <span class="card-label">Tổng thu nhập</span>
+        <span class="card-value text-success">+{{ summary().total_income | money }}</span>
+      </div>
+    </div>
+
+    <div class="summary-card expense-card">
+      <div class="card-icon">📉</div>
+      <div class="card-content">
+        <span class="card-label">Tổng chi phí</span>
+        <span class="card-value text-expense">-{{ summary().total_expense | money }}</span>
+      </div>
+    </div>
+
+    <div class="summary-card balance-card">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <span class="card-label">Số dư ròng</span>
+        <span
+          class="card-value"
+          [class.text-success]="summary().balance >= 0"
+          [class.text-expense]="summary().balance < 0"
+        >
+          {{ summary().balance | money }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nút thao tác nhanh -->
+  <div class="quick-links-bar">
+    <a routerLink="/transactions/new" class="btn btn-success">+ Ghi chép mới</a>
+    <a routerLink="/transactions" class="btn btn-primary">📖 Sổ giao dịch</a>
+    <a routerLink="/budgets" class="btn btn-warning">🎯 Ngân sách</a>
+    <a routerLink="/categories" class="btn btn-secondary">🏷️ Danh mục</a>
+  </div>
+
+  @if (loading()) {
+    <div class="state-loading">Đang tải dữ liệu bảng điều khiển...</div>
+  } @else {
+    <!-- Biểu đồ -->
+    <div class="charts-grid">
+      <!-- Biểu đồ phân bổ chi tiêu -->
+      <div class="card chart-card">
+        <h3>Phân bổ chi tiêu theo danh mục</h3>
+        @if (byCategory().length === 0) {
+          <div class="state-empty">Chưa có khoản chi tiêu nào trong tháng {{ selectedMonth }}.</div>
+        } @else {
+          <div class="chart-wrapper">
+            <canvas #categoryCanvas></canvas>
+          </div>
+        }
+      </div>
+
+      <!-- Biểu đồ xu hướng 6 tháng -->
+      <div class="card chart-card">
+        <h3>Xu hướng thu chi 6 tháng</h3>
+        @if (trend().length === 0) {
+          <div class="state-empty">Chưa có dữ liệu xu hướng.</div>
+        } @else {
+          <div class="chart-wrapper">
+            <canvas #trendCanvas></canvas>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Bảng phân tích chi tiết chi tiêu theo danh mục -->
+    @if (byCategory().length > 0) {
+      <div class="card table-card">
+        <h3>Chi tiết chi tiêu từng danh mục (Tháng {{ selectedMonth }})</h3>
+        <div class="category-breakdown-list">
+          @for (item of byCategory(); track item.category_id) {
+            <div class="breakdown-row">
+              <div class="cat-info">
+                <span class="cat-name">{{ item.category_name }}</span>
+                <span class="cat-amount">{{ item.amount | money }}</span>
+              </div>
+              <div class="cat-bar-wrapper">
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" [style.width.%]="item.percentage"></div>
+                </div>
+                <span class="cat-percent">{{ item.percentage }}%</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

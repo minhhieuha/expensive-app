@@ -1,75 +1,214 @@
-import { Component, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  OnDestroy,
+  ElementRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Chart, registerables } from 'chart.js';
 import { AuthService } from '../../core/auth/auth.service';
+import { ReportService } from '../../core/services/report.service';
+import { ReportSummary, CategoryReportItem, TrendItem } from '../../core/models/report.model';
+import { MoneyPipe } from '../../shared/pipes/money.pipe';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink],
-  template: `
-    <div class="dashboard-container">
-      <h1>Bảng điều khiển</h1>
-      <p>Xin chào, <strong>{{ authService.currentUser()?.email }}</strong>!</p>
-      <div class="quick-links">
-        <a routerLink="/transactions" class="btn btn-primary">📖 Xem sổ giao dịch</a>
-        <a routerLink="/transactions/new" class="btn btn-success">+ Ghi chép mới</a>
-        <a routerLink="/budgets" class="btn btn-warning">🎯 Quản lý ngân sách</a>
-        <a routerLink="/categories" class="btn btn-secondary">🏷️ Quản lý danh mục</a>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .dashboard-container {
-      padding: 2rem 1rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .quick-links {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .btn {
-      padding: 0.65rem 1.25rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      border-radius: 6px;
-      text-decoration: none;
-      display: inline-block;
-      transition: background-color 0.2s;
-    }
-    .btn-primary {
-      background: #2563eb;
-      color: #fff;
-    }
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-    .btn-success {
-      background: #16a34a;
-      color: #fff;
-    }
-    .btn-success:hover {
-      background: #15803d;
-    }
-    .btn-warning {
-      background: #d97706;
-      color: #fff;
-    }
-    .btn-warning:hover {
-      background: #b45309;
-    }
-    .btn-secondary {
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #cbd5e1;
-    }
-    .btn-secondary:hover {
-      background: #e2e8f0;
-    }
-  `],
+  imports: [CommonModule, FormsModule, RouterLink, MoneyPipe],
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly authService = inject(AuthService);
+  private readonly reportService = inject(ReportService);
+
+  @ViewChild('categoryCanvas') categoryCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('trendCanvas') trendCanvasRef?: ElementRef<HTMLCanvasElement>;
+
+  private categoryChart?: Chart;
+  private trendChart?: Chart;
+
+  selectedMonth = this.currentMonthStr();
+  readonly loading = signal<boolean>(false);
+  readonly errorMsg = signal<string | null>(null);
+
+  readonly summary = signal<ReportSummary>({
+    total_expense: 0,
+    total_income: 0,
+    balance: 0,
+  });
+  readonly byCategory = signal<CategoryReportItem[]>([]);
+  readonly trend = signal<TrendItem[]>([]);
+
+  currentMonthStr(): string {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  ngAfterViewInit(): void {
+    this.renderCharts();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyCharts();
+  }
+
+  onMonthChange(): void {
+    this.loadData();
+  }
+
+  loadData(): void {
+    this.loading.set(true);
+    this.errorMsg.set(null);
+
+    let completed = 0;
+    const checkDone = () => {
+      completed++;
+      if (completed >= 3) {
+        this.loading.set(false);
+        this.renderCharts();
+      }
+    };
+
+    this.reportService.getSummary(this.selectedMonth).subscribe({
+      next: (s) => {
+        this.summary.set(s);
+        checkDone();
+      },
+      error: () => {
+        this.errorMsg.set('Không thể tải tóm tắt báo cáo');
+        checkDone();
+      },
+    });
+
+    this.reportService.getByCategory(this.selectedMonth).subscribe({
+      next: (cats) => {
+        this.byCategory.set(cats);
+        checkDone();
+      },
+      error: () => {
+        checkDone();
+      },
+    });
+
+    this.reportService.getTrend(this.selectedMonth, 6).subscribe({
+      next: (t) => {
+        this.trend.set(t);
+        checkDone();
+      },
+      error: () => {
+        checkDone();
+      },
+    });
+  }
+
+  private destroyCharts(): void {
+    if (this.categoryChart) {
+      this.categoryChart.destroy();
+      this.categoryChart = undefined;
+    }
+    if (this.trendChart) {
+      this.trendChart.destroy();
+      this.trendChart = undefined;
+    }
+  }
+
+  private renderCharts(): void {
+    this.destroyCharts();
+
+    // 1. Render biểu đồ tròn phân bổ chi theo danh mục
+    const catCanvas = this.categoryCanvasRef?.nativeElement;
+    if (catCanvas && this.byCategory().length > 0) {
+      const ctx = catCanvas.getContext('2d');
+      if (ctx) {
+        const labels = this.byCategory().map((c) => c.category_name);
+        const data = this.byCategory().map((c) => c.amount);
+        const bgColors = [
+          '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4',
+          '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#64748b',
+        ];
+
+        this.categoryChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [
+              {
+                data,
+                backgroundColor: bgColors.slice(0, data.length),
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+              },
+            },
+          },
+        });
+      }
+    }
+
+    // 2. Render biểu đồ cột xu hướng 6 tháng (Thu & Chi)
+    const trendCanvas = this.trendCanvasRef?.nativeElement;
+    if (trendCanvas && this.trend().length > 0) {
+      const ctx = trendCanvas.getContext('2d');
+      if (ctx) {
+        const labels = this.trend().map((t) => t.month);
+        const incomeData = this.trend().map((t) => t.total_income);
+        const expenseData = this.trend().map((t) => t.total_expense);
+
+        this.trendChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Thu nhập',
+                data: incomeData,
+                backgroundColor: '#16a34a',
+              },
+              {
+                label: 'Chi phí',
+                data: expenseData,
+                backgroundColor: '#dc2626',
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+            },
+          },
+        });
+      }
+    }
+  }
 }
